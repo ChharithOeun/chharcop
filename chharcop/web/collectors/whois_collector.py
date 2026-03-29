@@ -1,7 +1,7 @@
 """WHOIS data collector for domain registration information."""
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import whois
@@ -54,12 +54,16 @@ class WhoisCollector(BaseCollector):
             # Calculate domain age
             days_old: int | None = None
             if creation_date:
-                days_old = (datetime.utcnow() - creation_date).days
+                now = datetime.now(timezone.utc)
+                cd = creation_date if creation_date.tzinfo else creation_date.replace(tzinfo=timezone.utc)
+                days_old = (now - cd).days
 
             # Calculate days until expiry
             days_until_expiry: int | None = None
             if expiration_date:
-                days_until_expiry = (expiration_date - datetime.utcnow()).days
+                now = datetime.now(timezone.utc)
+                ed = expiration_date if expiration_date.tzinfo else expiration_date.replace(tzinfo=timezone.utc)
+                days_until_expiry = (ed - now).days
 
             # Check for privacy protection
             privacy_protected = False
@@ -121,7 +125,11 @@ class WhoisCollector(BaseCollector):
 
         if isinstance(date_value, str):
             try:
-                return datetime.fromisoformat(date_value.replace("Z", "+00:00"))
+                dt = datetime.fromisoformat(date_value.replace("Z", "+00:00"))
+                # Normalize to UTC-aware
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                return dt
             except (ValueError, AttributeError):
                 return None
 

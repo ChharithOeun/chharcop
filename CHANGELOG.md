@@ -2,6 +2,15 @@
 
 All notable changes to Chharcop will be documented in this file.
 
+## [0.2.1] - 2026-03-29
+
+### First Real Scan
+- Completed first production scan against lookups.io (scan ID: 0136ef96)
+- Generated evidence report PDF with WHOIS, DNS, SSL, and metadata — all 4 collectors succeeded
+- Risk score: 0.0 / UNKNOWN (no red flags detected — domain 567 days old, valid Google-issued DV cert, full trust signals present)
+- Fixed WHOIS collector timezone bug (offset-naive vs offset-aware datetime arithmetic)
+- Evidence artifacts saved to `evidence/lookups_io_0136ef96.{json,pdf}`
+
 ## [0.2.0] - 2026-03-29
 
 ### Added — Auto-Training Module (`chharcop/training/`)
