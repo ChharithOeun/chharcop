@@ -4,6 +4,13 @@ All notable changes to Chharcop will be documented in this file.
 
 ## [0.1.0] - 2026-03-29
 
+### Security & Legal
+- Added comprehensive legal framework (LEGAL.md, Terms of Use, Privacy Policy)
+- Added license disclaimer addendum restricting to lawful use
+- Added CFAA/GDPR/CCPA compliance documentation
+- Added AI agent usage liability disclaimers
+- Added binding arbitration and class action waiver
+
 ### Added
 - Initial project scaffolding and architecture
 - Web investigation module (WHOIS, DNS, SSL, metadata collectors)

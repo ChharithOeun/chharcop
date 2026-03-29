@@ -2,6 +2,22 @@
   <img src="assets/banner.png" alt="Chharcop Banner" width="100%" />
 </p>
 
+> **⚠️ LEGAL DISCLAIMER**
+>
+> Chharcop is provided for **lawful anti-fraud investigation purposes only**. This tool collects
+> publicly available data to generate evidence reports for submission to law enforcement (FTC, FBI IC3).
+>
+> **YOU are solely responsible** for ensuring your use complies with all applicable laws, including the
+> Computer Fraud and Abuse Act, GDPR, CCPA, ECPA, and platform Terms of Service. Misuse for harassment,
+> stalking, doxxing, or vigilante justice is **strictly prohibited** and may violate federal and state law.
+>
+> This software is provided "AS IS" without warranty. The author assumes **no liability** for misuse,
+> legal consequences, or damages arising from use of this tool. **Consult a qualified attorney**
+> before using this tool for any investigation.
+>
+> By using Chharcop, you agree to the [Terms of Use](TERMS_OF_USE.md), [Legal Notice](LEGAL.md),
+> and [Privacy Policy](PRIVACY_POLICY.md).
+
 <h1 align="center">Chharcop</h1>
 
 <p align="center">
