@@ -1,338 +1,242 @@
-# Chharcop
+<p align="center">
+  <img src="assets/banner.png" alt="Chharcop Banner" width="100%" />
+</p>
 
-**Cross-platform scam evidence collection and reporting toolkit for websites and gaming platforms**
+<h1 align="center">Chharcop</h1>
 
-Chharcop is an open-source Python toolkit designed to collect comprehensive evidence of scams across websites and gaming platforms. It performs automated OSINT (Open Source Intelligence), risk assessment, and generates professional reports for reporting suspicious accounts and domains.
+<p align="center">
+  <strong>Cross-platform scammer investigation toolkit</strong>
+</p>
 
-## Features
+<p align="center">
+  <a href="https://github.com/chharith/chharcop/stargazers"><img src="https://img.shields.io/github/stars/chharith/chharcop?style=for-the-badge&logo=github&color=0abde3&logoColor=white" alt="Stars" /></a>
+  <a href="https://github.com/chharith/chharcop/blob/main/LICENSE"><img src="https://img.shields.io/github/license/chharith/chharcop?style=for-the-badge&color=ff2e97&logoColor=white" alt="License" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10+-ffd732?style=for-the-badge&logo=python&logoColor=white" alt="Python" /></a>
+  <a href="https://github.com/chharith/chharcop/commits/main"><img src="https://img.shields.io/github/last-commit/chharith/chharcop?style=for-the-badge&color=0abde3&logoColor=white" alt="Last Commit" /></a>
+  <a href="https://github.com/chharith/chharcop/issues"><img src="https://img.shields.io/github/issues/chharith/chharcop?style=for-the-badge&color=ff2e97&logoColor=white" alt="Issues" /></a>
+  <a href="https://github.com/chharith/chharcop/pulls"><img src="https://img.shields.io/badge/PRs-welcome-ffd732?style=for-the-badge" alt="PRs Welcome" /></a>
+</p>
 
-### Web Evidence Collection
-- **WHOIS Data**: Domain registration details, registrant info, privacy protection status
-- **DNS Records**: A, AAAA, MX, NS, TXT, CNAME, SOA records
-- **SSL/TLS Certificates**: Certificate validation, expiration, type classification (DV/OV/EV)
-- **Website Metadata**: Page structure, technology detection, trust signals, redirect tracking
+<br />
 
-### Gaming Platform OSINT
-- **Steam Profiles**: Account info, VAC/trade/community bans, game library, reputation status
-- **Discord Users**: Account age, scam pattern detection, account flags
-- **Cross-Platform Gamertag Search**: Find matching accounts across Steam, Xbox, PSN, Epic Games
+<p align="center">
+  <em>Arm yourself with the tools investigators actually need. Chharcop automates OSINT collection, evidence preservation, and report generation across web platforms, gaming networks, and communication channels — all from a single CLI.</em>
+</p>
 
-### Risk Assessment
-- Intelligent risk scoring based on multiple factors
-- Risk levels: LOW, MEDIUM, HIGH, CRITICAL, UNKNOWN
-- Detailed risk factor identification
+---
 
-### Cross-Platform
-- Works on Windows, macOS, and Linux
-- No platform-specific dependencies
-- Async/await for concurrent operations
+## Why Chharcop?
 
-## Installation
+Online scams cost victims billions every year and operate across dozens of platforms simultaneously. Traditional tools force investigators to juggle separate scripts, browser extensions, and manual screenshots. Chharcop unifies the entire workflow — from initial lead to court-ready evidence package — into one cross-platform toolkit that runs on Windows, macOS, and Linux.
 
-### From Source
+---
+
+## Feature Highlights
+
+**Automated OSINT Collection** — Pull public records, social profiles, domain WHOIS, and reverse image results in a single sweep. No manual tab-hopping required.
+
+**Evidence-Grade Capture** — Every piece of data is hashed (SHA-256), timestamped, and stored in a tamper-evident chain-of-custody format that holds up under legal scrutiny.
+
+**Cross-Platform Reach** — Investigate across web marketplaces, social media, gaming platforms (Steam, Discord, Xbox Live), and communication apps from one unified interface.
+
+**Smart Report Generation** — Automatically compile findings into professional PDF/DOCX investigation reports with timelines, entity graphs, and evidence indexes.
+
+**Plugin Architecture** — Extend Chharcop with community modules or write your own. Drop a Python file into `plugins/` and it's live.
+
+**Privacy-First Design** — All data stays local. No cloud dependencies, no telemetry, no third-party data sharing. Your investigations remain yours.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.10 or higher
+- pip (included with Python)
+- Git
+
+### Installation
 
 ```bash
-git clone https://github.com/chharbot/chharcop.git
+# Clone the repository
+git clone https://github.com/chharith/chharcop.git
 cd chharcop
-pip install -e .
+
+# Create a virtual environment (recommended)
+python -m venv .venv
+source .venv/bin/activate        # Linux / macOS
+.venv\Scripts\activate           # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Verify installation
+chharcop --version
 ```
 
-### With Optional Dependencies
+### One-Liner (pip)
 
 ```bash
-# For API server support
-pip install -e ".[api]"
-
-# For screenshot capabilities
-pip install -e ".[screenshots]"
-
-# For development
-pip install -e ".[dev]"
+pip install chharcop
 ```
 
-## Configuration
+---
 
-### API Keys
-
-Chharcop requires API keys for accessing external services. Set these as environment variables:
+## CLI Usage
 
 ```bash
-# Steam Web API Key
-export STEAM_API_KEY="your_steam_api_key"
+# Run a full investigation sweep on a username
+chharcop investigate --target "scammer_username" --modules all
 
-# Discord Bot Token
-export DISCORD_BOT_TOKEN="your_discord_bot_token"
+# Web-only OSINT lookup
+chharcop web --username "scammer_username" --depth full
 
-# VirusTotal API Key (optional)
-export VIRUSTOTAL_API_KEY="your_virustotal_api_key"
+# Gaming platform investigation
+chharcop gaming --platform steam --id "76561198000000000"
+
+# Capture and hash a webpage as evidence
+chharcop evidence capture --url "https://example.com/listing" --format png+html
+
+# Generate a PDF investigation report
+chharcop report generate --case "CASE-2026-0042" --format pdf
+
+# Search across all collected evidence
+chharcop evidence search --query "bitcoin wallet" --case "CASE-2026-0042"
+
+# Watch a target for new activity (runs in background)
+chharcop monitor --target "scammer_username" --interval 30m --notify slack
 ```
 
-#### Getting API Keys
+---
 
-**Steam API Key**: https://steamcommunity.com/dev/apikey
+## Module Overview
 
-**Discord Bot Token**: Create a bot at https://discord.com/developers/applications
+### `web` — Web & Social OSINT
 
-**VirusTotal API Key**: https://www.virustotal.com/gui/home/upload (free account)
-
-## Usage
-
-### Python API
-
-```python
-import asyncio
-from chharcop import Chharcop
-
-async def main():
-    chharcop = Chharcop()
-
-    # Scan a website
-    website_result = await chharcop.scan_website("example.com")
-    print(f"Risk Level: {website_result.risk_level}")
-    print(f"Risk Score: {website_result.risk_score}")
-
-    # Scan a Steam profile
-    steam_result = await chharcop.scan_steam("76561198012345678")
-
-    # Scan a Discord user
-    discord_result = await chharcop.scan_discord("123456789012345678")
-
-    # Search gamertag across platforms
-    gamertag_result = await chharcop.scan_gamertag("suspicious_user")
-
-    # Auto-detect and scan
-    results = await chharcop.full_scan("suspicious_site.com")
-
-asyncio.run(main())
-```
-
-### Command Line
+Username enumeration across 300+ platforms, domain/IP intelligence, WHOIS history, reverse image search, social media timeline archival, and dark web mention scanning.
 
 ```bash
-# Scan a website
-chharcop website example.com
-chharcop website example.com --json
-
-# Scan Steam profile
-chharcop steam 76561198012345678
-
-# Scan Discord user
-chharcop discord 123456789012345678
-
-# Search gamertag
-chharcop gamertag suspicious_user
-
-# Auto-detect and scan
-chharcop scan example.com
+chharcop web --username "target" --platforms all --output json
 ```
 
-## Architecture
+### `gaming` — Gaming Platform Investigations
 
-### Module Structure
+Profile scraping for Steam, Discord, Xbox Live, PSN, and Epic Games. Tracks name history, friend networks, trade histories, and linked accounts.
+
+```bash
+chharcop gaming --platform discord --id "123456789" --depth full
+```
+
+### `evidence` — Evidence Preservation
+
+Forensic-grade webpage capture (full DOM + screenshot), file hashing with SHA-256 chain, metadata extraction, EXIF analysis, and tamper-evident storage with chain-of-custody logging.
+
+```bash
+chharcop evidence capture --url "https://scam-site.example" --hash sha256
+```
+
+### `report` — Report Generation
+
+Compile all findings into professional investigation reports. Supports PDF, DOCX, and HTML output with auto-generated timelines, entity relationship graphs, communication maps, and evidence appendices.
+
+```bash
+chharcop report generate --case "CASE-2026-0042" --template law-enforcement
+```
+
+---
+
+## Project Structure
 
 ```
 chharcop/
-├── models.py           # Pydantic data models
-├── core.py            # Main Chharcop orchestrator
-├── web/               # Website evidence collectors
-│   └── collectors/
-│       ├── whois_collector.py
-│       ├── dns_collector.py
-│       ├── ssl_collector.py
-│       └── metadata_collector.py
-├── gaming/            # Gaming platform collectors
-│   └── collectors/
-│       ├── steam_collector.py
-│       ├── discord_collector.py
-│       └── gamertag_osint.py
-├── utils/             # Utilities
-│   ├── url_validator.py
-│   └── config.py
-├── evidence/          # Evidence storage (extensible)
-├── report/            # Report generation (extensible)
-└── cli/               # Command-line interface
+├── cli/                 # CLI entry point and argument parsing
+├── modules/
+│   ├── web/             # Web OSINT collection engines
+│   ├── gaming/          # Gaming platform investigators
+│   ├── evidence/        # Capture, hashing, and storage
+│   └── report/          # Report generation templates
+├── plugins/             # Community and custom plugins
+├── core/
+│   ├── config.py        # Configuration management
+│   ├── database.py      # Local SQLite evidence store
+│   ├── hasher.py        # SHA-256 chain-of-custody
+│   └── scheduler.py     # Background monitoring tasks
+├── templates/           # Report templates (PDF, DOCX, HTML)
+├── tests/               # Test suite
+├── requirements.txt
+├── setup.py
+└── README.md
 ```
 
-### Collector Architecture
+---
 
-All collectors inherit from a base class and follow a consistent pattern:
+## Configuration
 
-- **BaseCollector**: Base for web collectors
-- **BaseGamingCollector**: Base for gaming platform collectors
+Chharcop uses a local `config.yaml` for API keys and preferences:
 
-Collectors are fully async and include:
-- Error handling and recovery
-- Logging via loguru
-- Type hints throughout
-- Proper docstrings
+```yaml
+# ~/.chharcop/config.yaml
+general:
+  default_output: ./investigations
+  log_level: info
 
-## Data Models
+api_keys:
+  shodan: "your-key-here"
+  virustotal: "your-key-here"
+  dehashed: "your-key-here"
 
-### Risk Levels
-
-- `LOW`: Minor concerns
-- `MEDIUM`: Notable indicators of scam activity
-- `HIGH`: Strong indicators of scam activity
-- `CRITICAL`: Clear evidence of scam activity
-- `UNKNOWN`: Insufficient data
-
-### Risk Scoring
-
-Risk scores (0.0 to 1.0) are calculated based on:
-
-**Web Evidence**:
-- New domains (< 30 days): +0.3
-- Self-signed SSL certificates: +0.35
-- Invalid SSL certificates: +0.4
-- Missing trust signals (privacy policy, ToS, contact, about): +0.25
-- Suspicious redirect chains: +0.2
-
-**Gaming Evidence**:
-- VAC bans: +0.4
-- Trade bans: +0.35
-- Community bans: +0.3
-- SteamRep "scammer" status: +0.5
-- New accounts with few games: +0.25
-- Discord scam patterns: +0.3
-
-## Examples
-
-### Example 1: Website Analysis
-
-```python
-async def analyze_suspicious_site():
-    chharcop = Chharcop()
-    result = await chharcop.scan_website("suspicious-gaming-site.com")
-
-    if result.web_results:
-        whois = result.web_results.whois_data
-        if whois and whois.days_old < 30:
-            print(f"Warning: Domain is only {whois.days_old} days old!")
-
-        ssl = result.web_results.ssl_data
-        if ssl and ssl.is_self_signed:
-            print("Warning: Self-signed certificate detected!")
-
-    print(f"Overall Risk: {result.risk_level}")
+notifications:
+  slack_webhook: "https://hooks.slack.com/..."
+  discord_webhook: "https://discord.com/api/webhooks/..."
 ```
 
-### Example 2: Gaming Account Investigation
-
-```python
-async def investigate_gaming_account():
-    chharcop = Chharcop()
-
-    # Check Steam profile
-    steam_result = await chharcop.scan_steam("76561198012345678")
-    if steam_result.gaming_results and steam_result.gaming_results.steam_profile:
-        profile = steam_result.gaming_results.steam_profile
-        if profile.vac_banned:
-            print("Alert: Account has VAC bans!")
-        if profile.steamrep_status == "scammer":
-            print("Alert: Account flagged as scammer on SteamRep!")
-
-    # Search for matching accounts
-    gamertag_result = await chharcop.scan_gamertag("suspicious_user")
-    print(f"Found on {len(gamertag_result.gaming_results.cross_platform_matches)} platforms")
-```
-
-## Development
-
-### Running Tests
-
-```bash
-# Install dev dependencies
-pip install -e ".[dev]"
-
-# Run tests with coverage
-pytest
-
-# Run specific test
-pytest tests/test_models.py -v
-```
-
-### Code Quality
-
-```bash
-# Format code
-ruff format chharcop tests
-
-# Lint code
-ruff check chharcop tests
-
-# Type checking
-mypy chharcop
-
-# Pre-commit hooks
-pre-commit install
-pre-commit run --all-files
-```
+---
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are what make open-source great. Whether it's a bug fix, a new module, or documentation improvements — all contributions are welcome.
 
-## Testing Philosophy
+1. **Fork** the repository
+2. **Create** your feature branch (`git checkout -b feature/amazing-module`)
+3. **Commit** your changes (`git commit -m 'Add amazing module'`)
+4. **Push** to the branch (`git push origin feature/amazing-module`)
+5. **Open** a Pull Request
 
-All changes must include:
-- Unit tests for new collectors/utilities
-- Integration tests for orchestrator
-- Type hints throughout
-- Comprehensive docstrings
-- Error handling examples
+Please read the [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and development workflow.
 
-## Security
-
-- Never commit API keys or credentials
-- Use environment variables for sensitive data
-- All API communications use HTTPS
-- Certificate validation enabled by default
-- Input validation on all user-provided data
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-- Issues: https://github.com/chharbot/chharcop/issues
-- Discussions: https://github.com/chharbot/chharcop/discussions
-- Email: chharith@gmail.com
+---
 
 ## Roadmap
 
-### Planned Features
-- [ ] Report generation (PDF, HTML)
-- [ ] Evidence storage and caching
-- [ ] Integration with fraud databases
-- [ ] Phone number validation and carrier info
-- [ ] Email address reputation checking
-- [ ] IP geolocation and ASN lookup
-- [ ] Web UI for easy access
-- [ ] API server (FastAPI)
-- [ ] Database support for evidence history
+- [ ] Browser extension for one-click evidence capture
+- [ ] Cryptocurrency wallet tracing module
+- [ ] AI-powered scam pattern detection
+- [ ] Multi-language report templates
+- [ ] REST API server mode
+- [ ] Mobile app companion (React Native)
 
-### Collector Expansion
-- [ ] More gaming platforms (Roblox, Minecraft, etc.)
-- [ ] Payment processor checks (PayPal, Stripe)
-- [ ] Social media analysis
-- [ ] Email header analysis
+---
 
-## Disclaimer
+## Community & Support
 
-Chharcop is provided for authorized security research and evidence collection. Users are responsible for:
-- Obtaining proper authorization before scanning
-- Complying with applicable laws
-- Respecting terms of service of scanned platforms
-- Proper data handling and privacy
+<p align="center">
+  <a href="https://github.com/chharith/chharcop/discussions"><img src="https://img.shields.io/badge/GitHub-Discussions-0abde3?style=for-the-badge&logo=github" alt="Discussions" /></a>
+  <a href="https://discord.gg/chharcop"><img src="https://img.shields.io/badge/Discord-Join_Server-5865f2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
+  <a href="https://twitter.com/chharcop"><img src="https://img.shields.io/badge/Twitter-Follow-1da1f2?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter" /></a>
+</p>
 
-Unauthorized access to computer systems is illegal.
+- **Bug Reports** — [Open an issue](https://github.com/chharith/chharcop/issues/new?template=bug_report.md)
+- **Feature Requests** — [Start a discussion](https://github.com/chharith/chharcop/discussions/new?category=ideas)
+- **Security Issues** — Email `security@chharcop.dev` (do not open a public issue)
 
-## Author
+---
 
-**Chharbot Contributors**
-Email: chharith@gmail.com
+## License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+---
+
+<p align="center">
+  <sub>Built with conviction by <a href="https://github.com/chharith">@chharith</a> — because scammers shouldn't sleep easy.</sub>
+</p>
