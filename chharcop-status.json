@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "generated_at": "2026-03-29T00:00:00",
+  "training_metrics": {
+    "accuracy": null,
+    "precision": null,
+    "recall": null,
+    "f1": null,
+    "false_positive_rate": null,
+    "total_runs": 0,
+    "last_run": null,
+    "trend": [],
+    "per_module": {
+      "web": null,
+      "gaming": null,
+      "overall": null
+    }
+  },
+  "active_investigations": [],
+  "reporting_queue": [],
+  "vpn_status": {
+    "mode": "none",
+    "connected": false,
+    "ip": null,
+    "speed": null
+  },
+  "inbox": {
+    "unread_count": 0,
+    "recent_messages": []
+  },
+  "email_intake": {
+    "total_received": 0,
+    "auto_investigated": 0,
+    "pending": 0
+  },
+  "phone_intake": {
+    "total_received": 0,
+    "auto_investigated": 0,
+    "pending": 0
+  }
+}

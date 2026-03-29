@@ -138,3 +138,4 @@ Thumbs.db
 *.db
 *.json
 !pyproject.toml
+!chharcop-status.json
