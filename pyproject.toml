@@ -1,0 +1,94 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chharcop"
+version = "0.1.0"
+description = "Cross-platform scam evidence collection and reporting toolkit for websites and gaming platforms"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Chharbot Contributors", email = "chharith@gmail.com"}
+]
+keywords = ["scam", "fraud", "evidence", "reporting", "cybersecurity", "whois", "dns", "steam", "discord", "gaming"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+dependencies = [
+    "python-whois>=0.9.4",
+    "dnspython>=2.6.0",
+    "cryptography>=42.0.0",
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "reportlab>=4.1.0",
+    "click>=8.1.0",
+    "pydantic>=2.6.0",
+    "loguru>=0.7.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+api = ["fastapi>=0.109.0", "uvicorn>=0.27.0"]
+screenshots = ["playwright>=1.40.0"]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.2.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+]
+
+[project.scripts]
+chharcop = "chharcop.cli.main:cli"
+
+[project.urls]
+Homepage = "https://github.com/chharbot/chharcop"
+Repository = "https://github.com/chharbot/chharcop.git"
+Issues = "https://github.com/chharbot/chharcop/issues"
+Documentation = "https://github.com/chharbot/chharcop#readme"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "W", "I", "N", "UP", "BLE", "FBT", "A", "COM", "C4", "PIE", "PT", "RSE", "RET"]
+ignore = ["E501", "W293"]
+
+[tool.ruff.isort]
+known-first-party = ["chharcop"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+minversion = "7.4"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--cov=chharcop --cov-report=term-missing --cov-report=html"
+
+[tool.coverage.run]
+branch = true
+source = ["chharcop"]
