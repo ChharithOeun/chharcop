@@ -45,6 +45,17 @@ All notable changes to Chharcop will be documented in this file.
 - `chharcop-status.json` created with full v0.2.0 schema: `training_metrics`, `active_investigations`, `reporting_queue`, `vpn_status`, `inbox`, `email_intake`, `phone_intake`
 - Training metrics module auto-updates this file after each training run
 
+### Operations
+- First production scan against lookups.io completed successfully
+- Generated evidence report (PDF + JSON) with WHOIS, DNS, SSL, metadata
+- Fixed WHOIS collector timezone bug (offset-naive vs offset-aware)
+- Risk scoring algorithm calibration started
+
+### Business
+- Added monetization strategy document (docs/MONETIZATION_STRATEGY.md)
+- Identified top 5 revenue streams and top 3 scaling strategies
+- Documented legal implications of each monetization path
+
 ### Changed
 - `pyproject.toml`: Added optional dependency groups for `training` (no new deps — uses stdlib sqlite3), `vpn` (stem), `intake` (openai-whisper), `reporting` (playwright already in screenshots extra)
 
