@@ -1,0 +1,46 @@
+{
+  "scan_id": "db1a614e-c656-4713-8530-ac7221a397bc",
+  "target": "lookups.io",
+  "scan_type": "website",
+  "calibration_run": "2026-03-29",
+  "algorithm_version": "v0.2.1 (pre-calibration)",
+  "risk_level": "unknown",
+  "risk_score": 0.0,
+  "risk_factors": [],
+  "notes": "Pre-calibration score. Algorithm used max() of factors — no factors triggered because domain is 567 days old, has valid DV SSL, and all trust signals are present. Privacy-protected WHOIS ('Private by Design, LLC') was NOT detected. Cert expiry (33 days) was NOT checked. People-search keywords NOT evaluated.",
+  "raw_evidence": {
+    "whois": {
+      "domain": "lookups.io",
+      "registrar": "Porkbun LLC",
+      "registrar_url": "http://porkbun.com",
+      "creation_date": "2024-09-08T17:06:48Z",
+      "expiration_date": "2026-09-08T17:06:48Z",
+      "registrant_name": "Private by Design, LLC",
+      "privacy_protected": false,
+      "days_old": 567,
+      "days_until_expiry": 162
+    },
+    "dns": {
+      "a_records": ["104.26.3.102", "172.67.69.18", "104.26.2.102"],
+      "ns_records": ["becky.ns.cloudflare.com", "leonard.ns.cloudflare.com"]
+    },
+    "ssl": {
+      "issuer": {"O": "Google Trust Services", "CN": "WE1"},
+      "cert_type": "DV",
+      "is_self_signed": false,
+      "is_valid": true,
+      "days_until_expiry": 33,
+      "not_valid_after": "2026-05-02T17:40:00"
+    },
+    "metadata": {
+      "title": "Lookups.io - Find People Instantly",
+      "description": "Find anyone instantly with Lookups.io. Search by name, phone, email, or address to discover contact information, social profiles, and more.",
+      "status_code": 200,
+      "technologies": ["Magento", "Cloudflare"],
+      "has_privacy_policy": true,
+      "has_terms_of_service": true,
+      "has_contact_page": true,
+      "has_about_page": true
+    }
+  }
+}

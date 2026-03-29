@@ -1,0 +1,38 @@
+{
+  "scan_id": "916d3851-de38-479b-a2b1-9948a625d68f",
+  "target": "spokeo.com",
+  "scan_type": "website",
+  "calibration_run": "2026-03-29",
+  "algorithm_version": "v0.2.1 (pre-calibration)",
+  "risk_level": "medium",
+  "risk_score": 0.25,
+  "risk_factors": ["missing_trust_signals"],
+  "notes": "People-search / data broker site. WHOIS failed due to registrar_url being returned as a list — fixed in v0.2.2. Metadata returned HTTP 403 (bot-blocking), which caused all trust signals to appear missing. In v0.2.2 the missing_all_trust_signals signal only fires on HTTP 200 responses to avoid false positives from bot-blocking. Certificate has 89 days to expiry (no expiring_soon signal). Post-calibration expected: ~5-10 pts (LOW) due to limited content data from 403 block.",
+  "raw_evidence": {
+    "whois": null,
+    "whois_error": "ValidationError: registrar_url returned as list ['http://www.enomdomains.com', ...] — fixed in v0.2.2",
+    "dns": {
+      "a_records": ["16.148.232.81", "54.200.56.83", "35.160.134.172", "34.216.10.232"],
+      "ns_records": ["ns-987.awsdns-59.net", "ns-1803.awsdns-33.co.uk", "ns-1177.awsdns-19.org", "ns-43.awsdns-05.com"]
+    },
+    "ssl": {
+      "issuer": {"O": "Amazon", "CN": "Amazon RSA 2048 M02"},
+      "cert_type": "DV",
+      "is_self_signed": false,
+      "is_valid": true,
+      "days_until_expiry": 89,
+      "not_valid_after": "2026-06-26T23:59:59",
+      "san_notable": ["callseeker.com", "easyphonelookup.com", "quickphonelookup.com"]
+    },
+    "metadata": {
+      "title": "403 Forbidden",
+      "status_code": 403,
+      "technologies": [],
+      "has_privacy_policy": false,
+      "has_terms_of_service": false,
+      "has_contact_page": false,
+      "has_about_page": false,
+      "server_header": "awselb/2.0"
+    }
+  }
+}

@@ -65,10 +65,16 @@ class WhoisCollector(BaseCollector):
                 ed = expiration_date if expiration_date.tzinfo else expiration_date.replace(tzinfo=timezone.utc)
                 days_until_expiry = (ed - now).days
 
-            # Check for privacy protection
+            # Check for privacy protection (checked again by WhoisData model validator)
+            _PRIVACY_KEYWORDS = [
+                "privacy", "private", "whoisguard", "whois guard",
+                "domains by proxy", "contact privacy", "identity protect",
+                "perfect privacy", "redacted for privacy",
+            ]
             privacy_protected = False
             if whois_result.registrant_name:
-                privacy_protected = "privacy" in whois_result.registrant_name.lower()
+                name_lower = whois_result.registrant_name.lower()
+                privacy_protected = any(kw in name_lower for kw in _PRIVACY_KEYWORDS)
 
             # Extract name servers
             name_servers: list[str] = []
@@ -77,10 +83,15 @@ class WhoisCollector(BaseCollector):
                     str(ns).lower().rstrip(".") for ns in whois_result.name_servers
                 ]
 
+            # registrar_url is occasionally returned as a list by the whois library
+            raw_registrar_url = getattr(whois_result, "registrar_url", None)
+            if isinstance(raw_registrar_url, list):
+                raw_registrar_url = raw_registrar_url[0] if raw_registrar_url else None
+
             whois_data = WhoisData(
                 domain=target,
                 registrar=whois_result.registrar,
-                registrar_url=getattr(whois_result, "registrar_url", None),
+                registrar_url=raw_registrar_url,
                 creation_date=creation_date,
                 expiration_date=expiration_date,
                 updated_date=updated_date,
