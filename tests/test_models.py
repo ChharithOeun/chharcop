@@ -244,10 +244,10 @@ class TestScanResult:
         assert result.risk_level == RiskLevel.UNKNOWN
 
     def test_risk_score_calculation_with_factors(self) -> None:
-        """Test risk score calculation with factors."""
+        """Test risk score calculation with self-signed cert (35 pts → MEDIUM)."""
         ssl = SslData(
             domain="example.com",
-            is_self_signed=True,  # +0.35
+            is_self_signed=True,  # +35
         )
 
         from chharcop.models import WebScanResult
@@ -265,18 +265,18 @@ class TestScanResult:
 
         result.calculate_risk_score()
 
-        assert result.risk_score >= 0.35
-        assert result.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]
+        assert result.risk_score >= 35
+        assert result.risk_level in [RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.CRITICAL]
 
     def test_multiple_risk_factors(self) -> None:
-        """Test multiple risk factors combined."""
+        """Test multiple risk factors combined (additive, capped at 100)."""
         steam_profile = SteamProfile(
             steam_id="76561198012345678",
             persona_name="BadPlayer",
             profile_url="https://steamcommunity.com/id/bad",
-            vac_banned=True,  # +0.4
-            trade_ban=True,   # +0.35
-            steamrep_status="scammer",  # +0.5
+            vac_banned=True,        # +40
+            trade_ban=True,         # +35
+            steamrep_status="scammer",  # +50 → total 125, capped at 100
         )
 
         from chharcop.models import GamingScanResult
@@ -295,7 +295,7 @@ class TestScanResult:
 
         result.calculate_risk_score()
 
-        assert result.risk_score >= 0.4  # Should use max factor
+        assert result.risk_score >= 40  # At minimum the VAC ban weight
         assert result.risk_level == RiskLevel.CRITICAL
 
 

@@ -10,7 +10,7 @@ from enum import Enum
 from hashlib import sha256
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class RiskLevel(str, Enum):
@@ -72,6 +72,20 @@ class WhoisData(BaseModel):
     )
     days_old: Optional[int] = Field(None, description="Age of domain in days")
     days_until_expiry: Optional[int] = Field(None, description="Days until expiration")
+
+    @model_validator(mode="after")
+    def _detect_privacy_from_registrant(self) -> "WhoisData":
+        """Auto-detect privacy protection from registrant name keywords."""
+        _PRIVACY_KEYWORDS = [
+            "privacy", "private", "whoisguard", "whois guard",
+            "domains by proxy", "contact privacy", "identity protect",
+            "perfect privacy", "redacted for privacy",
+        ]
+        if not self.privacy_protected and self.registrant_name:
+            name_lower = self.registrant_name.lower()
+            if any(kw in name_lower for kw in _PRIVACY_KEYWORDS):
+                self.privacy_protected = True
+        return self
 
 
 class DnsRecord(BaseModel):
@@ -264,7 +278,7 @@ class ScanResult(BaseModel):
     scan_type: str = Field(..., description="Type of scan (website, steam, discord, gamertag, full)")
     risk_level: RiskLevel = Field(default=RiskLevel.UNKNOWN, description="Overall risk assessment")
     risk_score: float = Field(
-        default=0.0, ge=0.0, le=1.0, description="Numerical risk score"
+        default=0.0, ge=0.0, le=100.0, description="Numerical risk score (0-100)"
     )
     risk_factors: list[str] = Field(default_factory=list, description="Identified risk factors")
     web_results: Optional[WebScanResult] = Field(None, description="Website scan results")
@@ -282,77 +296,143 @@ class ScanResult(BaseModel):
         use_enum_values = True
 
     def calculate_risk_score(self) -> None:
-        """Calculate overall risk score and level based on collected data."""
+        """Calculate overall risk score (0-100) based on collected data.
+
+        Uses additive weighted scoring — each independent signal contributes its
+        weight and the total is capped at 100.  Thresholds:
+            0-30   → LOW
+            31-60  → MEDIUM
+            61-80  → HIGH
+            81-100 → CRITICAL
+        """
         factors: dict[str, float] = {}
 
+        _PEOPLE_SEARCH_KEYWORDS = [
+            "find people", "people search", "people finder", "background check",
+            "reverse phone", "phone lookup", "people lookup", "find anyone",
+            "public records", "search people", "who is calling",
+            "reverse lookup", "address lookup",
+        ]
+        _PRIVACY_REGISTRAR_KEYWORDS = [
+            "privacy", "private", "whoisguard", "whois guard",
+            "domains by proxy", "contact privacy", "identity protect",
+            "perfect privacy", "redacted for privacy",
+        ]
+        _DISCOUNT_REGISTRARS = ["porkbun", "namecheap", "namesilo"]
+
         if self.web_results:
-            # Domain age risk
+            # --- Domain age ---
             if self.web_results.whois_data:
-                if self.web_results.whois_data.days_old is not None:
-                    if self.web_results.whois_data.days_old < 30:
-                        factors["new_domain"] = 0.3
-                    elif self.web_results.whois_data.days_old < 180:
-                        factors["recently_created"] = 0.15
+                w = self.web_results.whois_data
+                if w.days_old is not None:
+                    if w.days_old < 30:
+                        factors["new_domain"] = 40.0
+                    elif w.days_old < 180:
+                        factors["recently_created"] = 20.0
 
-            # SSL certificate risks
+                # Privacy-protected registration (field or registrant name)
+                registrant = (w.registrant_name or "").lower()
+                if w.privacy_protected or any(
+                    kw in registrant for kw in _PRIVACY_REGISTRAR_KEYWORDS
+                ):
+                    factors["privacy_registrar"] = 8.0
+
+                # Known discount / high-abuse-rate registrar
+                registrar_name = (w.registrar or "").lower()
+                if any(r in registrar_name for r in _DISCOUNT_REGISTRARS):
+                    factors["discount_registrar"] = 5.0
+
+            # --- SSL certificate ---
             if self.web_results.ssl_data:
-                if self.web_results.ssl_data.is_self_signed:
-                    factors["self_signed_cert"] = 0.35
-                if not self.web_results.ssl_data.is_valid:
-                    factors["invalid_cert"] = 0.4
-                if self.web_results.ssl_data.cert_type == "unknown":
-                    factors["unknown_cert_type"] = 0.2
+                ssl = self.web_results.ssl_data
+                if ssl.is_self_signed:
+                    factors["self_signed_cert"] = 35.0
+                if not ssl.is_valid:
+                    factors["invalid_cert"] = 40.0
+                if ssl.cert_type in ("DV", "unknown"):
+                    factors["dv_cert_only"] = 5.0
+                if ssl.days_until_expiry is not None and ssl.days_until_expiry < 45:
+                    factors["cert_expiring_soon"] = 15.0
 
-            # Metadata risks
+            # --- Metadata / content ---
+            people_search_detected = False
             if self.web_results.metadata:
-                missing_trust_signals = 0
-                if not self.web_results.metadata.has_privacy_policy:
-                    missing_trust_signals += 1
-                if not self.web_results.metadata.has_terms_of_service:
-                    missing_trust_signals += 1
-                if not self.web_results.metadata.has_contact_page:
-                    missing_trust_signals += 1
-                if not self.web_results.metadata.has_about_page:
-                    missing_trust_signals += 1
+                meta = self.web_results.metadata
 
-                if missing_trust_signals >= 3:
-                    factors["missing_trust_signals"] = 0.25
+                # People-search / data-broker detection
+                title_desc = (
+                    (meta.title or "") + " " + (meta.description or "")
+                ).lower()
+                if any(kw in title_desc for kw in _PEOPLE_SEARCH_KEYWORDS):
+                    factors["people_search_site"] = 20.0
+                    people_search_detected = True
 
-                if len(self.web_results.metadata.redirect_chain) > 2:
-                    factors["suspicious_redirects"] = 0.2
+                # Platform mismatch: Magento (e-commerce) on a people-search site
+                if people_search_detected and "Magento" in meta.technologies:
+                    factors["platform_mismatch"] = 10.0
 
+                # Cloudflare proxy (via tech stack or server header)
+                if "Cloudflare" in meta.technologies or (
+                    meta.server_header
+                    and "cloudflare" in meta.server_header.lower()
+                ):
+                    factors["cloudflare_proxy"] = 5.0
+
+                # All four trust signals absent — only count for live 200 pages
+                if meta.status_code == 200:
+                    missing = sum([
+                        not meta.has_privacy_policy,
+                        not meta.has_terms_of_service,
+                        not meta.has_contact_page,
+                        not meta.has_about_page,
+                    ])
+                    if missing == 4:
+                        factors["missing_all_trust_signals"] = 20.0
+
+                # Suspicious redirect chain
+                if len(meta.redirect_chain) > 2:
+                    factors["suspicious_redirects"] = 15.0
+
+            # Cloudflare via DNS nameservers (fallback if tech stack unavailable)
+            if self.web_results.dns_data and "cloudflare_proxy" not in factors:
+                ns = self.web_results.dns_data.ns_records
+                if any("cloudflare" in n.lower() for n in ns):
+                    factors["cloudflare_proxy"] = 5.0
+
+        # --- Gaming platform signals ---
         if self.gaming_results:
             if self.gaming_results.steam_profile:
                 sp = self.gaming_results.steam_profile
                 if sp.vac_banned:
-                    factors["vac_banned"] = 0.4
+                    factors["vac_banned"] = 40.0
                 if sp.trade_ban:
-                    factors["trade_banned"] = 0.35
+                    factors["trade_banned"] = 35.0
                 if sp.community_banned:
-                    factors["community_banned"] = 0.3
+                    factors["community_banned"] = 30.0
                 if sp.steamrep_status == "scammer":
-                    factors["steamrep_flagged"] = 0.5
+                    factors["steamrep_flagged"] = 50.0
                 if sp.game_count < 5 and sp.account_created:
                     age = (datetime.utcnow() - sp.account_created).days
                     if age < 30:
-                        factors["new_account_few_games"] = 0.25
+                        factors["new_account_few_games"] = 25.0
                 if sp.visibility == "private":
-                    factors["private_profile"] = 0.1
+                    factors["private_profile"] = 10.0
 
             if self.gaming_results.discord_user:
                 if len(self.gaming_results.discord_user.known_scam_patterns) > 0:
-                    factors["discord_scam_patterns"] = 0.3
+                    factors["discord_scam_patterns"] = 30.0
 
-        # Combine risk factors (using maximum to prevent saturation)
+        # Additive scoring, capped at 100
         if factors:
-            self.risk_score = max(factors.values())
+            self.risk_score = min(100.0, sum(factors.values()))
             self.risk_factors = list(factors.keys())
 
-            if self.risk_score >= 0.4:
+            score = self.risk_score
+            if score >= 81:
                 self.risk_level = RiskLevel.CRITICAL
-            elif self.risk_score >= 0.3:
+            elif score >= 61:
                 self.risk_level = RiskLevel.HIGH
-            elif self.risk_score >= 0.15:
+            elif score >= 31:
                 self.risk_level = RiskLevel.MEDIUM
-            elif self.risk_score > 0:
+            elif score > 0:
                 self.risk_level = RiskLevel.LOW

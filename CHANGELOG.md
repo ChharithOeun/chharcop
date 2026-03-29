@@ -2,6 +2,69 @@
 
 All notable changes to Chharcop will be documented in this file.
 
+## [0.2.2] - 2026-03-29
+
+### Risk Scoring Calibration
+
+Complete rewrite of the `calculate_risk_score()` algorithm based on multi-site calibration
+runs against 5 targets: lookups.io, spokeo.com, beenverified.com (people-search), and
+google.com / amazon.com (legitimate controls).
+
+**Root cause of 0.0 score on lookups.io:**  The old algorithm used `max(factors.values())`
+so only the single worst signal counted — and no single trigger fired.  Privacy-protected
+WHOIS ("Private by Design, LLC") was missed because the keyword check only looked for
+"privacy" not "private".  The 33-day cert expiry window was never evaluated.
+
+**Algorithm changes (chharcop/models.py):**
+- Switched from `max()` to **additive scoring**, capped at 100
+- Score scale changed from 0.0–1.0 to **0–100** with new thresholds:
+  - 0–30 → LOW, 31–60 → MEDIUM, 61–80 → HIGH, 81–100 → CRITICAL
+- `risk_score` Pydantic field updated to `le=100.0`
+- Added `WhoisData.model_validator` that auto-detects privacy registration from
+  registrant name keywords ("privacy", "private", "whoisguard", "domains by proxy", …)
+
+**New risk signals and weights:**
+| Signal | Weight | Trigger |
+|---|---|---|
+| `new_domain` | +40 | Domain < 30 days old |
+| `recently_created` | +20 | Domain < 180 days old |
+| `self_signed_cert` | +35 | Self-signed SSL |
+| `invalid_cert` | +40 | Expired / invalid SSL |
+| `cert_expiring_soon` | +15 | SSL expiry < 45 days |
+| `dv_cert_only` | +5 | DV certificate (not OV/EV) |
+| `people_search_site` | +20 | Title/description matches people-search keywords |
+| `platform_mismatch` | +10 | Magento on a people-search / non-commerce site |
+| `cloudflare_proxy` | +5 | Cloudflare in tech stack, server header, or NS records |
+| `missing_all_trust_signals` | +20 | ALL 4 trust signals absent on HTTP 200 page |
+| `suspicious_redirects` | +15 | Redirect chain > 2 hops |
+| `privacy_registrar` | +8 | Privacy-protected WHOIS registration |
+| `discount_registrar` | +5 | Porkbun / Namecheap / Namesilo |
+
+**Removed signals:** `unknown_cert_type` (folded into `dv_cert_only`), old
+`missing_trust_signals` threshold of 3 (now requires ALL 4 to avoid false positives
+on large sites like amazon.com).
+
+**Bug fixes (chharcop/web/collectors/whois_collector.py):**
+- Fixed `ValidationError` crash when `registrar_url` is returned as a `list` by the
+  `python-whois` library (seen on spokeo.com, beenverified.com) — now takes `[0]`
+- Improved privacy detection in collector to use the same keyword set as the model validator
+
+**Re-scored lookups.io with v0.2.2 algorithm:**
+- Previous: 0.0 / UNKNOWN
+- New: **68 / HIGH**
+- Factors: `privacy_registrar`(+8) + `discount_registrar`(+5) + `dv_cert_only`(+5) +
+  `cert_expiring_soon`(+15) + `cloudflare_proxy`(+5) + `people_search_site`(+20) +
+  `platform_mismatch`(+10)
+
+**Calibration run results (evidence/calibration_*.json):**
+| Site | Pre-v0.2.2 | Post-v0.2.2 | Expected |
+|---|---|---|---|
+| lookups.io | 0.0 UNKNOWN | 68 HIGH | MEDIUM–HIGH |
+| google.com | 0.0 UNKNOWN | 5 LOW | LOW ✓ |
+| amazon.com | 25 MEDIUM (**false positive**) | 5 LOW | LOW ✓ |
+| beenverified.com | 0.0 UNKNOWN | 40 MEDIUM | MEDIUM ✓ |
+| spokeo.com | 25 MEDIUM (403 artefact) | 5 LOW | varies (bot-blocked) |
+
 ## [0.2.1] - 2026-03-29
 
 ### First Real Scan
