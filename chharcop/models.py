@@ -2,7 +2,8 @@
 Pydantic models for Chharcop.
 
 Central data structures for evidence collection, scanning results, and reporting.
-Includes models for web (WHOIS, DNS, SSL) and gaming (Steam, Discord) data.
+Includes models for web (WHOIS, DNS, SSL), gaming (Steam, Discord), and
+social media (Twitter, Reddit, cross-platform OSINT) data.
 """
 
 from datetime import datetime
@@ -270,6 +271,117 @@ class GamingScanResult(BaseModel):
     collection_timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
+class SocialProfile(BaseModel):
+    """Evidence collected from a single social media platform."""
+
+    platform: str = Field(..., description="Platform identifier (twitter, reddit, etc.)")
+    username: str = Field(..., description="Username on this platform")
+    found: bool = Field(default=False, description="Whether the account was found")
+    account_age_days: Optional[int] = Field(None, description="Account age in days")
+    flags: list[str] = Field(
+        default_factory=list, description="Behaviour flags detected on this platform"
+    )
+    raw_data: dict[str, Any] = Field(
+        default_factory=dict, description="Raw collector output for this platform"
+    )
+
+
+class SocialScanResult(BaseModel):
+    """Results from the social media behavior scan."""
+
+    username: str = Field(..., description="Username that was scanned")
+    platforms_found: list[str] = Field(
+        default_factory=list, description="Platforms where the account was found"
+    )
+    profiles: list[dict[str, Any]] = Field(
+        default_factory=list, description="Per-platform profile findings"
+    )
+    risk_score: float = Field(
+        default=0.0, ge=0.0, le=100.0, description="Social behavior risk score (0-100)"
+    )
+    risk_level: RiskLevel = Field(
+        default=RiskLevel.UNKNOWN, description="Overall social risk level"
+    )
+    risk_factors: list[str] = Field(
+        default_factory=list, description="Risk factors identified across platforms"
+    )
+    errors: list[CollectorError] = Field(
+        default_factory=list, description="Collection errors"
+    )
+    collection_timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        use_enum_values = True
+
+    def calculate_risk_score(self) -> None:
+        """Calculate social behavior risk score (0-100).
+
+        Aggregates flags from all platform profiles.  Additive weighted
+        scoring capped at 100, same scale as the web/gaming algorithm.
+
+        Signal weights:
+            new_account                  +15 per platform (first occurrence)
+            very_new_account             +20 (replaces new_account if present)
+            bot_posting_interval         +30
+            24h_activity_pattern         +25
+            scam_language_in_bio         +35
+            scam_language_in_posts       +30
+            profile_clone_indicator      +40
+            follower_farming             +20
+            high_follower_low_engagement +20
+            bot_like_ratio               +20
+            low_karma_high_activity      +20
+            suspicious_subreddits        +20
+            account_age_clustering       +25
+            username_on_5_plus_platforms +10
+            username_on_8_plus_platforms +15
+        """
+        _WEIGHTS: dict[str, float] = {
+            "new_account": 15.0,
+            "very_new_account": 20.0,
+            "bot_posting_interval": 30.0,
+            "24h_activity_pattern": 25.0,
+            "scam_language_in_bio": 35.0,
+            "scam_language_in_posts": 30.0,
+            "profile_clone_indicator": 40.0,
+            "follower_farming": 20.0,
+            "high_follower_low_engagement": 20.0,
+            "bot_like_ratio": 20.0,
+            "low_karma_high_activity": 20.0,
+            "suspicious_subreddits": 20.0,
+            "account_age_clustering": 25.0,
+            "username_on_5_plus_platforms": 10.0,
+            "username_on_8_plus_platforms": 15.0,
+        }
+
+        factors: dict[str, float] = {}
+
+        # Collect all unique flags across all profiles
+        for profile in self.profiles:
+            for flag in profile.get("flags", []):
+                if flag in _WEIGHTS and flag not in factors:
+                    # very_new_account supersedes new_account
+                    if flag == "new_account" and "very_new_account" in factors:
+                        continue
+                    if flag == "very_new_account" and "new_account" in factors:
+                        factors.pop("new_account")
+                    factors[flag] = _WEIGHTS[flag]
+
+        if factors:
+            self.risk_score = min(100.0, sum(factors.values()))
+            self.risk_factors = list(factors.keys())
+
+            score = self.risk_score
+            if score >= 81:
+                self.risk_level = RiskLevel.CRITICAL
+            elif score >= 61:
+                self.risk_level = RiskLevel.HIGH
+            elif score >= 31:
+                self.risk_level = RiskLevel.MEDIUM
+            elif score > 0:
+                self.risk_level = RiskLevel.LOW
+
+
 class ScanResult(BaseModel):
     """Complete scan result combining web and gaming evidence."""
 
@@ -283,6 +395,7 @@ class ScanResult(BaseModel):
     risk_factors: list[str] = Field(default_factory=list, description="Identified risk factors")
     web_results: Optional[WebScanResult] = Field(None, description="Website scan results")
     gaming_results: Optional[GamingScanResult] = Field(None, description="Gaming scan results")
+    social_results: Optional[SocialScanResult] = Field(None, description="Social media scan results")
     correlation_notes: list[str] = Field(
         default_factory=list, description="Notes on cross-platform correlations"
     )
@@ -421,6 +534,28 @@ class ScanResult(BaseModel):
             if self.gaming_results.discord_user:
                 if len(self.gaming_results.discord_user.known_scam_patterns) > 0:
                     factors["discord_scam_patterns"] = 30.0
+
+        # --- Social media signals ---
+        if self.social_results and self.social_results.risk_score > 0:
+            sr = self.social_results
+            # Map high-value social flags directly into this scan's factors
+            _SOCIAL_PASS_THROUGH = {
+                "scam_language_in_bio": 35.0,
+                "scam_language_in_posts": 30.0,
+                "profile_clone_indicator": 40.0,
+                "bot_posting_interval": 25.0,
+                "24h_activity_pattern": 20.0,
+                "account_age_clustering": 20.0,
+            }
+            for flag, weight in _SOCIAL_PASS_THROUGH.items():
+                if flag in sr.risk_factors:
+                    factors[f"social_{flag}"] = weight
+
+            # Bucket score for remaining social risk
+            if sr.risk_score >= 61 and "social_high_risk" not in factors:
+                factors["social_high_risk"] = 20.0
+            elif sr.risk_score >= 31 and "social_medium_risk" not in factors:
+                factors["social_medium_risk"] = 10.0
 
         # Additive scoring, capped at 100
         if factors:

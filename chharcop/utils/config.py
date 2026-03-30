@@ -18,6 +18,9 @@ class Config:
     steam_api_key: str | None = field(default=None)
     discord_bot_token: str | None = field(default=None)
     virustotal_api_key: str | None = field(default=None)
+    twitter_bearer_token: str | None = field(default=None)
+    reddit_client_id: str | None = field(default=None)
+    reddit_client_secret: str | None = field(default=None)
     cache_dir: Path = field(default_factory=lambda: Path.home() / ".cache" / "chharcop")
 
     def __post_init__(self) -> None:
@@ -31,6 +34,9 @@ class Config:
         - STEAM_API_KEY
         - DISCORD_BOT_TOKEN
         - VIRUSTOTAL_API_KEY
+        - TWITTER_BEARER_TOKEN
+        - REDDIT_CLIENT_ID
+        - REDDIT_CLIENT_SECRET
         """
         # Load API keys
         if not self.steam_api_key:
@@ -42,6 +48,15 @@ class Config:
         if not self.virustotal_api_key:
             self.virustotal_api_key = os.environ.get("VIRUSTOTAL_API_KEY")
 
+        if not self.twitter_bearer_token:
+            self.twitter_bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
+
+        if not self.reddit_client_id:
+            self.reddit_client_id = os.environ.get("REDDIT_CLIENT_ID")
+
+        if not self.reddit_client_secret:
+            self.reddit_client_secret = os.environ.get("REDDIT_CLIENT_SECRET")
+
         # Log available keys (without exposing values)
         if self.steam_api_key:
             logger.debug("Steam API key loaded from environment")
@@ -49,6 +64,10 @@ class Config:
             logger.debug("Discord bot token loaded from environment")
         if self.virustotal_api_key:
             logger.debug("VirusTotal API key loaded from environment")
+        if self.twitter_bearer_token:
+            logger.debug("Twitter bearer token loaded from environment")
+        if self.reddit_client_id:
+            logger.debug("Reddit client ID loaded from environment")
 
     def ensure_cache_dir(self) -> Path:
         """Ensure cache directory exists.

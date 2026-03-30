@@ -11,7 +11,7 @@ from chharcop.models import ScanResult
 
 
 @click.group()
-@click.version_option(version="0.1.0", prog_name="chharcop")
+@click.version_option(version="0.3.0", prog_name="chharcop")
 def cli() -> None:
     """Chharcop: Cross-platform scam evidence collection and reporting toolkit."""
     logger.enable("chharcop")
@@ -92,6 +92,32 @@ def gamertag(username: str, output_json: bool) -> None:
             click.echo(result.model_dump_json(indent=2))
         else:
             click.echo(f"Gamertag OSINT Results: {username}")
+
+    asyncio.run(scan())
+
+
+@cli.command()
+@click.argument("username")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def social(username: str, output_json: bool) -> None:
+    """Scan a username across social media platforms (Twitter, Reddit, OSINT)."""
+
+    async def scan() -> None:
+        chharcop = Chharcop()
+        result = await chharcop.scan_social(username)
+
+        if output_json:
+            click.echo(result.model_dump_json(indent=2))
+        else:
+            click.echo(f"Social Scan Results: {username}")
+            click.echo(f"Risk Level  : {result.risk_level}")
+            click.echo(f"Risk Score  : {result.risk_score:.0f}/100")
+            if result.risk_factors:
+                click.echo(f"Risk Factors: {', '.join(result.risk_factors)}")
+            if result.social_results:
+                sr = result.social_results
+                if sr.platforms_found:
+                    click.echo(f"Platforms   : {', '.join(sr.platforms_found)}")
 
     asyncio.run(scan())
 

@@ -53,6 +53,107 @@ All evidence saved to `evidence/calibration/`.
 | peoplelooker.com | 53 | MEDIUM |
 | lookups.io | 68 | HIGH |
 | fastpeoplesearch.com | 68 | HIGH |
+## [0.3.0] - 2026-03-29
+
+### Added — Social Media Behavior Scan Module (`chharcop/social/`)
+
+New module for cross-platform social media evidence collection and scam-behavior
+detection, following the same base-class + per-platform collector architecture as
+`chharcop/gaming/`.
+
+**New files:**
+
+| File | Purpose |
+|---|---|
+| `social/__init__.py` | Exports `SocialScanner` |
+| `social/collectors/base.py` | `BaseSocialCollector` — async `collect()` + `_collect()` abstract pattern |
+| `social/collectors/twitter_collector.py` | Twitter/X API v2 via tweepy |
+| `social/collectors/reddit_collector.py` | Reddit API via PRAW |
+| `social/collectors/username_osint.py` | HTTP HEAD/GET cross-platform enumeration (no API key needed) |
+| `social/collectors/__init__.py` | Collector exports |
+| `social/patterns.py` | `SocialPatterns` class — regex/threshold detection library |
+| `social/scanner.py` | `SocialScanner` — asyncio.gather orchestrator |
+| `social/report.py` | `generate_social_section()` for evidence PDF |
+
+**TwitterCollector** (`TWITTER_BEARER_TOKEN` required):
+- Collects: account age, follower/following counts, tweet frequency, bio, link patterns
+- Timing analysis: average posting interval over last 100 tweets, hour-distribution across 24h
+- Flags: `new_account`, `very_new_account`, `bot_posting_interval`, `24h_activity_pattern`,
+  `scam_language_in_bio`, `follower_farming`, `high_follower_low_engagement`,
+  `profile_clone_indicator`
+
+**RedditCollector** (`REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` required):
+- Collects: account age, link/comment karma breakdown, subreddit activity (50 posts + 100 comments)
+- Flags: `new_account`, `very_new_account`, `low_karma_high_activity`,
+  `suspicious_subreddits`, `bot_posting_interval`, `24h_activity_pattern`,
+  `scam_language_in_posts`
+- Suspicious subreddit list: cryptomoonshots, satoshistreetbets, forex, giftcardexchange,
+  hardwareswap, and 8 others
+
+**UsernameOsint** (no API keys — HTTP HEAD/GET only):
+- Checks 9 platforms: Twitter, Reddit, Instagram, TikTok, GitHub, Steam, Facebook, LinkedIn, YouTube
+- Flags: `username_on_5_plus_platforms`, `username_on_8_plus_platforms`,
+  `account_age_clustering` (≥ 2 newly-created accounts on different platforms)
+- Realistic browser headers to reduce bot-blocking; per-platform body-exclusion checks
+  (e.g. Steam "profile not found" page)
+
+**SocialPatterns** (`social/patterns.py`):
+- 50+ scam language regex patterns (urgency, DM requests, crypto spam, gift cards, giveaways,
+  romance scams, impersonation)
+- Bot detection: posting interval < 120s, activity in ≥ 20 distinct hours
+- Follower-farming: following ≥ 500 and followers/following < 10%
+- Profile clone: regex on username/display_name for "official", "the real", "verified" etc.
+- Low-karma-high-activity: < 50 karma with > 20 posts/comments
+
+**Social Behavior Score (0-100)** in `SocialScanResult.calculate_risk_score()`:
+
+| Signal | Weight |
+|---|---|
+| `profile_clone_indicator` | +40 |
+| `scam_language_in_bio` | +35 |
+| `scam_language_in_posts` | +30 |
+| `bot_posting_interval` | +30 |
+| `24h_activity_pattern` | +25 |
+| `account_age_clustering` | +25 |
+| `very_new_account` | +20 |
+| `follower_farming` | +20 |
+| `high_follower_low_engagement` | +20 |
+| `bot_like_ratio` | +20 |
+| `low_karma_high_activity` | +20 |
+| `suspicious_subreddits` | +20 |
+| `new_account` | +15 |
+| `username_on_8_plus_platforms` | +15 |
+| `username_on_5_plus_platforms` | +10 |
+
+**Integration changes:**
+
+- `chharcop/models.py`: Added `SocialProfile`, `SocialScanResult` models;
+  added `social_results: Optional[SocialScanResult]` to `ScanResult`;
+  `ScanResult.calculate_risk_score()` now propagates high-value social flags
+  (`scam_language_in_bio`, `scam_language_in_posts`, `profile_clone_indicator`,
+  `bot_posting_interval`, `account_age_clustering`) into the top-level scan score
+- `chharcop/core.py`: Added `scan_social(username) -> ScanResult` method;
+  `SocialScanner` instantiated in `__init__`
+- `chharcop/cli/main.py`: Added `chharcop social <username>` command;
+  bumped CLI version to 0.3.0
+- `chharcop/utils/config.py`: Added `twitter_bearer_token`, `reddit_client_id`,
+  `reddit_client_secret` fields; loads `TWITTER_BEARER_TOKEN`, `REDDIT_CLIENT_ID`,
+  `REDDIT_CLIENT_SECRET` from environment
+- `pyproject.toml`: Bumped version to 0.3.0; added `social` optional dependency group
+  (`tweepy>=4.14.0`, `praw>=7.7.0`); both added to `all` group as well
+
+**Install social dependencies:**
+```
+pip install chharcop[social]
+```
+
+**Required environment variables for full social scan:**
+```
+TWITTER_BEARER_TOKEN=...   # Twitter API v2 bearer token
+REDDIT_CLIENT_ID=...        # Reddit app client ID
+REDDIT_CLIENT_SECRET=...    # Reddit app client secret
+```
+`UsernameOsint` (cross-platform HTTP enumeration) works without any API keys.
 
 ## [0.2.2] - 2026-03-29
 

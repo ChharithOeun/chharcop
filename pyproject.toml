@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chharcop"
-version = "0.2.0"
+version = "0.3.0"
 description = "Cross-platform scam evidence collection and reporting toolkit for websites and gaming platforms"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Chharbot Contributors", email = "chharith@gmail.com"}
 ]
-keywords = ["scam", "fraud", "evidence", "reporting", "cybersecurity", "whois", "dns", "steam", "discord", "gaming"]
+keywords = ["scam", "fraud", "evidence", "reporting", "cybersecurity", "whois", "dns", "steam", "discord", "gaming", "twitter", "reddit", "social"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -45,6 +45,10 @@ api = ["fastapi>=0.109.0", "uvicorn>=0.27.0"]
 screenshots = ["playwright>=1.40.0"]
 vpn = ["stem>=1.8.2"]
 intake = ["openai-whisper>=20231117"]
+social = [
+    "tweepy>=4.14.0",
+    "praw>=7.7.0",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
@@ -59,6 +63,8 @@ all = [
     "playwright>=1.40.0",
     "stem>=1.8.2",
     "openai-whisper>=20231117",
+    "tweepy>=4.14.0",
+    "praw>=7.7.0",
 ]
 
 [project.scripts]

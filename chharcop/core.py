@@ -16,8 +16,10 @@ from chharcop.gaming.collectors import (
 from chharcop.models import (
     GamingScanResult,
     ScanResult,
+    SocialScanResult,
     WebScanResult,
 )
+from chharcop.social.scanner import SocialScanner
 from chharcop.utils.config import Config
 from chharcop.utils.url_validator import extract_domain, validate_url
 from chharcop.web.collectors import (
@@ -53,6 +55,7 @@ class Chharcop:
             "steam": SteamCollector(),
             "discord": DiscordCollector(),
         }
+        self.social_scanner = SocialScanner()
         logger.info("Chharcop initialized")
 
     async def scan_website(self, url: str) -> ScanResult:
@@ -294,6 +297,43 @@ class Chharcop:
 
         except Exception as e:
             logger.error(f"Gamertag scan failed for {username}: {str(e)}")
+            raise
+
+    async def scan_social(self, username: str) -> ScanResult:
+        """Scan a username across social media platforms.
+
+        Runs Twitter, Reddit, and cross-platform username OSINT collectors
+        concurrently.  Calculates Social Behavior Score (0-100).
+
+        Args:
+            username: Username / handle to investigate (without @ or u/)
+
+        Returns:
+            ScanResult with social_results populated
+        """
+        scan_id = str(uuid.uuid4())
+        logger.info(f"Starting social scan: {username} (ID: {scan_id})")
+
+        try:
+            social_result: SocialScanResult = await self.social_scanner.scan(username)
+
+            scan_result = ScanResult(
+                scan_id=scan_id,
+                target=username,
+                scan_type="social",
+                social_results=social_result,
+            )
+
+            scan_result.calculate_risk_score()
+            logger.info(
+                f"Social scan completed: {username} "
+                f"(Risk: {scan_result.risk_level}, Score: {scan_result.risk_score})"
+            )
+
+            return scan_result
+
+        except Exception as e:
+            logger.error(f"Social scan failed for {username}: {str(e)}")
             raise
 
     async def full_scan(self, target: str) -> ScanResult | list[ScanResult]:
