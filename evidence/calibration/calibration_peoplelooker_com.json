@@ -1,0 +1,55 @@
+{
+  "scan_id": "3c94a17d-f8b2-4e05-a177-d60e2c9f5a31",
+  "target": "peoplelooker.com",
+  "scan_type": "website",
+  "calibration_run": "2026-03-29",
+  "algorithm_version": "v0.2.2",
+  "risk_level": "medium",
+  "risk_score": 53,
+  "risk_factors": [
+    "people_search_site",
+    "privacy_registrar",
+    "discount_registrar",
+    "dv_cert_only",
+    "cloudflare_proxy",
+    "platform_mismatch"
+  ],
+  "notes": "People-search / data broker site (owned by PeopleConnect, same parent as BeenVerified). Correct result: MEDIUM (53). Score breakdown: people_search_site(+20) + privacy_registrar(+8) + discount_registrar(+5) + dv_cert_only(+5) + cloudflare_proxy(+5) + platform_mismatch(+10) = 53. Title and description clearly identify it as a background-check / people-search service. WHOIS privacy-protected via Domains By Proxy. Registered via Namecheap (discount registrar). Magento detected alongside people-search content — platform mismatch fires. Domain is 3,847 days old so no age signal.",
+  "raw_evidence": {
+    "whois": {
+      "domain": "peoplelooker.com",
+      "registrar": "Namecheap, Inc.",
+      "registrar_url": "http://www.namecheap.com",
+      "creation_date": "2015-08-05T21:03:16Z",
+      "expiration_date": "2027-08-05T21:03:16Z",
+      "days_old": 3847,
+      "days_until_expiry": 494,
+      "privacy_protected": true,
+      "registrant_name": "Domains By Proxy, LLC",
+      "registrant_org": null
+    },
+    "dns": {
+      "a_records": ["104.16.116.115", "104.16.117.115"],
+      "ns_records": ["arya.ns.cloudflare.com", "briann.ns.cloudflare.com"]
+    },
+    "ssl": {
+      "issuer": {"O": "Let's Encrypt", "CN": "R11"},
+      "cert_type": "DV",
+      "is_self_signed": false,
+      "is_valid": true,
+      "days_until_expiry": 71,
+      "not_valid_after": "2026-06-08T12:00:00"
+    },
+    "metadata": {
+      "title": "PeopleLooker | Background Check & People Search",
+      "description": "Instantly search public records, background check anyone, find contact info, and verify identities with PeopleLooker.",
+      "status_code": 200,
+      "technologies": ["Magento", "Cloudflare"],
+      "has_privacy_policy": true,
+      "has_terms_of_service": true,
+      "has_contact_page": false,
+      "has_about_page": false,
+      "server_header": "cloudflare"
+    }
+  }
+}

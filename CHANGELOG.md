@@ -2,6 +2,58 @@
 
 All notable changes to Chharcop will be documented in this file.
 
+## [0.2.3] - 2026-03-29
+
+### Docs — Risk Scoring Transparency
+- Added `docs/RISK_SCORING.md`: full public explanation of the additive scoring model
+  - Lists every risk signal, its point value, and a plain-English explanation of what it means
+  - Documents all 4 score thresholds (LOW/MEDIUM/HIGH/CRITICAL)
+  - Includes complete calibration results table for all 10 tested sites
+  - Covers known limitations (bot-blocked sites, DV cert false positives, privacy WHOIS on legitimate sites)
+  - Links source code location (`chharcop/models.py → ScanResult.calculate_risk_score()`)
+- Updated `README.md`: added Risk Scoring section with summary calibration table and link to `docs/RISK_SCORING.md`
+
+### Fix — FUNDING.yml Buy Me a Coffee
+- Fixed `.github/FUNDING.yml`: replaced `custom: ["https://buymeacoffee.com/chharcop"]` with
+  the correct native GitHub format `buy_me_a_coffee: chharcop`
+- The previous `custom` URL format caused a 404 on GitHub's sponsor button
+- GitHub Sponsors entry (`github: ChharithOeun`) was already correct
+
+### Risk Calibration — Round 2 (5 new sites)
+Added calibration runs against 2 additional legitimate controls and 3 people-search sites.
+All evidence saved to `evidence/calibration/`.
+
+**New results:**
+
+| Site | Score | Level | Type |
+|------|-------|-------|------|
+| facebook.com | 5 | LOW | Control (legit) |
+| paypal.com | 0 | UNKNOWN | Control (EV cert — cleanest possible profile) |
+| peoplelooker.com | 53 | MEDIUM | People-search |
+| truthfinder.com | 38 | MEDIUM | People-search |
+| fastpeoplesearch.com | 68 | HIGH | People-search (more sketchy) |
+
+**Key observations:**
+- paypal.com scores 0/UNKNOWN — the only tested site with an EV cert; confirms EV cert correctly suppresses `dv_cert_only` signal
+- facebook.com scores 5/LOW despite being one of the world's largest sites — DV cert is now standard even for major companies using short-lived auto-renewed certs
+- fastpeoplesearch.com ties lookups.io at 68 HIGH: cert_expiring_soon (+15) fires due to 38-day expiry (under 45-day threshold), which is unusual for a Let's Encrypt site with auto-renewal available — signals poor operational hygiene
+- truthfinder.com scores 38 vs peoplelooker.com's 53 because it doesn't use Magento — no platform_mismatch fires
+
+**Cumulative calibration dataset (10 sites):**
+
+| Site | Score | Level |
+|------|-------|-------|
+| paypal.com | 0 | UNKNOWN |
+| google.com | 5 | LOW |
+| amazon.com | 5 | LOW |
+| facebook.com | 5 | LOW |
+| spokeo.com | 5 | LOW (bot-blocked) |
+| truthfinder.com | 38 | MEDIUM |
+| beenverified.com | 40 | MEDIUM |
+| peoplelooker.com | 53 | MEDIUM |
+| lookups.io | 68 | HIGH |
+| fastpeoplesearch.com | 68 | HIGH |
+
 ## [0.2.2] - 2026-03-29
 
 ### Risk Scoring Calibration

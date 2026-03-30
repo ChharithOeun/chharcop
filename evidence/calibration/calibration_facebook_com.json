@@ -1,0 +1,53 @@
+{
+  "scan_id": "f2a318c0-91e4-4b77-bcd5-a3e7d0f84291",
+  "target": "facebook.com",
+  "scan_type": "website",
+  "calibration_run": "2026-03-29",
+  "algorithm_version": "v0.2.2",
+  "risk_level": "low",
+  "risk_score": 5,
+  "risk_factors": ["dv_cert_only"],
+  "notes": "Control test — known legitimate site. Correct result: LOW. Domain is 9,983 days old (registered 1997-03-29), MarkMonitor registrar, self-managed DNS (a.ns.facebook.com etc.), valid DV cert from DigiCert 59 days to expiry, all 4 trust signals present. No Cloudflare (Meta/Facebook CDN). Only signal: dv_cert_only (+5) — DV cert is standard even for large orgs issuing short-lived certs via automation.",
+  "raw_evidence": {
+    "whois": {
+      "domain": "facebook.com",
+      "registrar": "MarkMonitor, Inc.",
+      "registrar_url": "http://www.markmonitor.com",
+      "creation_date": "1997-03-29T05:00:00Z",
+      "expiration_date": "2031-03-30T04:00:00Z",
+      "days_old": 9983,
+      "days_until_expiry": 1827,
+      "privacy_protected": false,
+      "registrant_name": "Domain Admin",
+      "registrant_org": "Meta Platforms, Inc."
+    },
+    "dns": {
+      "a_records": ["157.240.241.35"],
+      "ns_records": [
+        "a.ns.facebook.com",
+        "b.ns.facebook.com",
+        "c.ns.facebook.com",
+        "d.ns.facebook.com"
+      ]
+    },
+    "ssl": {
+      "issuer": {"O": "DigiCert Inc", "CN": "DigiCert SHA2 High Assurance Server CA"},
+      "cert_type": "DV",
+      "is_self_signed": false,
+      "is_valid": true,
+      "days_until_expiry": 59,
+      "not_valid_after": "2026-05-27T23:59:59"
+    },
+    "metadata": {
+      "title": "Facebook – log in or sign up",
+      "description": "Create an account or log into Facebook. Connect with friends, family and other people you know.",
+      "status_code": 200,
+      "technologies": [],
+      "has_privacy_policy": true,
+      "has_terms_of_service": true,
+      "has_contact_page": true,
+      "has_about_page": true,
+      "server_header": null
+    }
+  }
+}

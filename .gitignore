@@ -139,3 +139,5 @@ Thumbs.db
 *.json
 !pyproject.toml
 !chharcop-status.json
+!evidence/*.json
+!evidence/calibration/*.json

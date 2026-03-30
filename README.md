@@ -63,6 +63,37 @@ Online scams cost victims billions every year and operate across dozens of platf
 
 ---
 
+## Risk Scoring
+
+Chharcop grades every website scan on a **0–100 additive risk scale** using 13 calibrated signals. The model is fully transparent — every point is traceable to a specific observable signal.
+
+| Score | Level | Meaning |
+|-------|-------|---------|
+| 0 | UNKNOWN | No signals fired |
+| 1–30 | LOW | Minor concerns, likely legitimate |
+| 31–60 | MEDIUM | Worth caution — data broker, new domain, or poor security hygiene |
+| 61–80 | HIGH | Multiple strong signals — treat as suspicious |
+| 81–100 | CRITICAL | Severe risk — likely fraudulent or scam infrastructure |
+
+**Calibration results** (10 sites tested across 2 rounds):
+
+| Site | Score | Level |
+|------|-------|-------|
+| paypal.com | 0 | UNKNOWN (cleanest possible profile) |
+| google.com | 5 | LOW |
+| amazon.com | 5 | LOW |
+| facebook.com | 5 | LOW |
+| truthfinder.com | 38 | MEDIUM |
+| beenverified.com | 40 | MEDIUM |
+| peoplelooker.com | 53 | MEDIUM |
+| lookups.io | 68 | HIGH |
+| fastpeoplesearch.com | 68 | HIGH |
+| spokeo.com | 5 | LOW (bot-blocked 403 — limited data) |
+
+**[Full risk scoring documentation →](docs/RISK_SCORING.md)**
+
+---
+
 ## Quick Start
 
 ### Prerequisites
