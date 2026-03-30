@@ -1,8 +1,10 @@
 """Website metadata and structure collector."""
 
+import ipaddress
 import re
 from datetime import datetime
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -46,6 +48,22 @@ class MetadataCollector(BaseCollector):
         self._name = "MetadataCollector"
         self.timeout = 10.0
 
+    @staticmethod
+    def _is_safe_url(url: str) -> bool:
+        """Return False if the URL points to a private/loopback/internal address.
+
+        Prevents SSRF via redirect chains leading to internal infrastructure.
+        """
+        try:
+            hostname = urlparse(url).hostname or ""
+            hostname = hostname.strip("[]")
+            addr = ipaddress.ip_address(hostname)
+            if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+                return False
+        except ValueError:
+            pass  # hostname is a domain name, not a raw IP — allow it
+        return True
+
     async def _collect(self, target: str) -> SiteMetadata | None:
         """Collect website metadata.
 
@@ -66,15 +84,30 @@ class MetadataCollector(BaseCollector):
             final_url = target
 
             async with httpx.AsyncClient(
-                follow_redirects=True, timeout=self.timeout
+                follow_redirects=True,
+                max_redirects=10,
+                timeout=self.timeout,
             ) as client:
                 try:
                     response = await client.get(target)
 
-                    # Track redirect chain
+                    # Track redirect chain and block SSRF via redirect to private IPs
                     for history_response in response.history:
-                        redirect_chain.append(str(history_response.url))
+                        redirect_url = str(history_response.url)
+                        if not self._is_safe_url(redirect_url):
+                            logger.warning(
+                                "Blocked redirect to private/internal address: {}",
+                                redirect_url,
+                            )
+                            raise ValueError(
+                                f"Redirect to internal address blocked: {redirect_url}"
+                            )
+                        redirect_chain.append(redirect_url)
                     final_url = str(response.url)
+                    if not self._is_safe_url(final_url):
+                        raise ValueError(
+                            f"Final URL resolves to internal address: {final_url}"
+                        )
 
                     # Extract metadata from content
                     soup = BeautifulSoup(response.text, "html.parser")

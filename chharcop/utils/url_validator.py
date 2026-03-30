@@ -1,15 +1,34 @@
 """URL validation and domain extraction utilities."""
 
+import ipaddress
 from urllib.parse import urlparse
 
 from loguru import logger
+
+
+def _is_private_host(hostname: str) -> bool:
+    """Return True if hostname resolves to a private/loopback/link-local address.
+
+    Blocks SSRF attempts targeting internal infrastructure.
+    """
+    if not hostname:
+        return True
+    # Strip IPv6 brackets
+    hostname = hostname.strip("[]")
+    try:
+        addr = ipaddress.ip_address(hostname)
+        return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+    except ValueError:
+        # Not a raw IP — domain names are fine at this stage
+        return False
 
 
 def validate_url(url: str) -> bool:
     """Validate if string is a valid URL or domain.
 
     Accepts both full URLs and domain names. Performs basic validation
-    without external lookups.
+    without external lookups. Rejects URLs that target private/internal
+    IP addresses to prevent SSRF.
 
     Args:
         url: URL or domain string to validate
@@ -25,6 +44,10 @@ def validate_url(url: str) -> bool:
         if not url:
             return False
 
+        # Reject protocol-relative URLs (potential SSRF / confusion)
+        if url.startswith("//"):
+            return False
+
         # Add scheme if missing
         if not url.startswith(("http://", "https://", "ftp://")):
             url = f"https://{url}"
@@ -33,6 +56,12 @@ def validate_url(url: str) -> bool:
 
         # Check for required components
         if not parsed.netloc:
+            return False
+
+        # Block private/loopback/internal IP addresses (SSRF prevention)
+        hostname = parsed.hostname or ""
+        if _is_private_host(hostname):
+            logger.debug("Blocked private/internal host in URL: {}", hostname)
             return False
 
         # Check domain validity
@@ -59,6 +88,10 @@ def extract_domain(url: str) -> str | None:
             return None
 
         url = url.strip()
+
+        # Normalise protocol-relative URLs
+        if url.startswith("//"):
+            url = f"https:{url}"
 
         # Add scheme if missing
         if not url.startswith(("http://", "https://", "ftp://")):
@@ -152,6 +185,10 @@ def normalize_url(url: str) -> str:
             return ""
 
         url = url.strip()
+
+        # Normalise protocol-relative URLs
+        if url.startswith("//"):
+            url = f"https:{url}"
 
         # Add scheme if missing
         if not url.startswith(("http://", "https://", "ftp://")):

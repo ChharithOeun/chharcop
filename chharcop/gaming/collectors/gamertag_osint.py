@@ -1,6 +1,7 @@
 """Cross-platform gamertag OSINT collector."""
 
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from loguru import logger
@@ -80,8 +81,9 @@ class GamertagOsint(BaseGamingCollector):
             GamertagResult if found, None otherwise
         """
         try:
-            # Try direct vanity URL
-            vanity_url = f"https://steamcommunity.com/id/{gamertag}/"
+            # URL-encode gamertag to prevent path traversal / parameter injection
+            safe_tag = quote(gamertag, safe="")
+            vanity_url = f"https://steamcommunity.com/id/{safe_tag}/"
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.head(vanity_url, follow_redirects=False)
                 if response.status_code == 200:
@@ -107,8 +109,8 @@ class GamertagOsint(BaseGamingCollector):
             GamertagResult if found, None otherwise
         """
         try:
-            # Xbox profile URL pattern
-            xbox_url = f"https://xboxgamertag.com/search/{gamertag}"
+            safe_tag = quote(gamertag, safe="")
+            xbox_url = f"https://xboxgamertag.com/search/{safe_tag}"
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(xbox_url)
                 if response.status_code == 200:
@@ -118,7 +120,7 @@ class GamertagOsint(BaseGamingCollector):
                             gamertag=gamertag,
                             platform="xbox",
                             found=True,
-                            profile_url=f"https://xboxgamertag.com/{gamertag}",
+                            profile_url=f"https://xboxgamertag.com/{safe_tag}",
                             verified=True,
                         )
         except Exception as e:
@@ -136,8 +138,8 @@ class GamertagOsint(BaseGamingCollector):
             GamertagResult if found, None otherwise
         """
         try:
-            # PSN profile URL pattern
-            psn_url = f"https://www.psn.com/en-us/search/{gamertag}"
+            safe_tag = quote(gamertag, safe="")
+            psn_url = f"https://www.psn.com/en-us/search/{safe_tag}"
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(psn_url)
                 if response.status_code == 200:
@@ -147,7 +149,7 @@ class GamertagOsint(BaseGamingCollector):
                             gamertag=gamertag,
                             platform="psn",
                             found=True,
-                            profile_url=f"https://www.psn.com/en-us/profile/{gamertag}",
+                            profile_url=f"https://www.psn.com/en-us/profile/{safe_tag}",
                             verified=True,
                         )
         except Exception as e:

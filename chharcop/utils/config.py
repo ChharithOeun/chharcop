@@ -70,16 +70,22 @@ class Config:
             logger.debug("Reddit client ID loaded from environment")
 
     def ensure_cache_dir(self) -> Path:
-        """Ensure cache directory exists.
+        """Ensure cache directory exists with restricted permissions.
 
         Creates cache directory if it doesn't exist.
-        Cross-platform compatible.
+        Sets permissions to 0o700 (owner read/write/execute only) to
+        prevent other users from reading cached API responses and scan data.
+        Cross-platform compatible (chmod is a no-op on Windows).
 
         Returns:
             Path to cache directory
         """
         try:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                self.cache_dir.chmod(0o700)
+            except NotImplementedError:
+                pass  # Windows does not support POSIX chmod
             logger.debug(f"Cache directory ready: {self.cache_dir}")
             return self.cache_dir
         except Exception as e:

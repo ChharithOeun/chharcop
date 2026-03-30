@@ -483,11 +483,26 @@ class AutoSubmitter:
             raise ValueError(f"Submission #{submission_id} not found")
         return self._row_to_sub(row)
 
+    # Columns that may be updated — used to prevent SQL injection via kwargs keys.
+    _UPDATABLE_COLUMNS: frozenset[str] = frozenset({
+        "status",
+        "form_version",
+        "screenshot_path",
+        "submitted_at",
+        "acknowledged_at",
+        "response_reference",
+        "last_error",
+    })
+
     def _update(self, submission_id: int, **kwargs: Any) -> None:
         if not kwargs:
             return
-        cols = ", ".join(f"{k}=?" for k in kwargs)
-        vals = list(kwargs.values()) + [submission_id]
+        # Whitelist column names to prevent SQL injection through dynamic key names.
+        safe_kwargs = {k: v for k, v in kwargs.items() if k in self._UPDATABLE_COLUMNS}
+        if not safe_kwargs:
+            return
+        cols = ", ".join(f"{k}=?" for k in safe_kwargs)
+        vals = list(safe_kwargs.values()) + [submission_id]
         with sqlite3.connect(self.db_path) as con:
             con.execute(f"UPDATE submissions SET {cols} WHERE id=?", vals)
             con.commit()

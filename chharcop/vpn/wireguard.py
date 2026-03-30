@@ -176,8 +176,22 @@ class WireGuardClient:
     # Config management
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _validate_interface_name(name: str) -> None:
+        """Reject interface names that could escape the config directory.
+
+        Linux imposes a 15-char limit; we also restrict to safe characters
+        to prevent path traversal or shell injection in subprocess args.
+        """
+        if not re.fullmatch(r"[a-zA-Z0-9_\-]{1,15}", name):
+            raise ValueError(
+                f"Invalid WireGuard interface name '{name}'. "
+                "Must be 1-15 alphanumeric/dash/underscore characters."
+            )
+
     def save_config(self, config: WireGuardConfig, name: str = INTERFACE_NAME) -> Path:
         """Write a WireGuard config to disk and return the path."""
+        self._validate_interface_name(name)
         path = self.config_dir / f"{name}.conf"
         path.write_text(config.to_wg_conf(), encoding="utf-8")
         path.chmod(0o600)  # WireGuard requires strict permissions
@@ -186,6 +200,7 @@ class WireGuardClient:
 
     def load_config(self, name: str = INTERFACE_NAME) -> WireGuardConfig:
         """Load a previously saved config by interface name."""
+        self._validate_interface_name(name)
         path = self.config_dir / f"{name}.conf"
         if not path.exists():
             raise FileNotFoundError(f"No WireGuard config for interface '{name}'")
@@ -216,6 +231,11 @@ class WireGuardClient:
                 installed=False,
                 error="WireGuard not installed. " + self.install_instructions(),
             )
+
+        try:
+            self._validate_interface_name(interface)
+        except ValueError as exc:
+            return WireGuardStatus(installed=True, error=str(exc))
 
         if config is not None:
             conf_path = self.save_config(config, interface)
@@ -250,6 +270,11 @@ class WireGuardClient:
         Returns True on success, False if not connected or WireGuard not found.
         """
         iface = interface or self._active_interface or self.INTERFACE_NAME
+        try:
+            self._validate_interface_name(iface)
+        except ValueError as exc:
+            logger.error("disconnect: {}", exc)
+            return False
         conf_path = self.config_dir / f"{iface}.conf"
         if not conf_path.exists():
             logger.warning("No config to disconnect for interface {}", iface)

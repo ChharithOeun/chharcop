@@ -3,6 +3,7 @@
 import asyncio
 from datetime import datetime, timedelta
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from loguru import logger
@@ -151,7 +152,7 @@ class SteamCollector(BaseGamingCollector):
             async with httpx.AsyncClient(timeout=5.0) as client:
                 url = (
                     f"{self.STEAM_API_BASE}/ISteamUser/ResolveVanityURL/v1/"
-                    f"?key={self.api_key}&vanityurl={vanity_or_id}"
+                    f"?key={self.api_key}&vanityurl={quote(vanity_or_id, safe='')}"
                 )
                 response = await client.get(url)
                 response.raise_for_status()
@@ -178,7 +179,7 @@ class SteamCollector(BaseGamingCollector):
         try:
             url = (
                 f"{self.STEAM_API_BASE}/ISteamUser/GetPlayerSummaries/v2/"
-                f"?key={self.api_key}&steamids={steam_id}&format=json"
+                f"?key={self.api_key}&steamids={quote(steam_id, safe='')}&format=json"
             )
             response = await client.get(url)
             response.raise_for_status()
@@ -204,7 +205,7 @@ class SteamCollector(BaseGamingCollector):
         try:
             url = (
                 f"{self.STEAM_API_BASE}/ISteamUser/GetPlayerBans/v1/"
-                f"?key={self.api_key}&steamids={steam_id}&format=json"
+                f"?key={self.api_key}&steamids={quote(steam_id, safe='')}&format=json"
             )
             response = await client.get(url)
             response.raise_for_status()
@@ -230,7 +231,7 @@ class SteamCollector(BaseGamingCollector):
         try:
             url = (
                 f"{self.STEAM_API_BASE}/IPlayerService/GetOwnedGames/v1/"
-                f"?key={self.api_key}&steamid={steam_id}&format=json"
+                f"?key={self.api_key}&steamid={quote(steam_id, safe='')}&format=json"
             )
             response = await client.get(url)
             response.raise_for_status()
@@ -254,7 +255,7 @@ class SteamCollector(BaseGamingCollector):
         try:
             url = (
                 f"{self.STEAM_API_BASE}/ISteamUser/GetFriendList/v1/"
-                f"?key={self.api_key}&steamid={steam_id}&relationship=friend"
+                f"?key={self.api_key}&steamid={quote(steam_id, safe='')}&relationship=friend"
             )
             response = await client.get(url)
             response.raise_for_status()
@@ -276,7 +277,7 @@ class SteamCollector(BaseGamingCollector):
             Status string: 'scammer', 'trusted', or 'unknown'
         """
         try:
-            url = f"{self.STEAMREP_API_BASE}/ISteamRepAPI/GetUserBans/v1/?steamids={steam_id}&api=python"
+            url = f"{self.STEAMREP_API_BASE}/ISteamRepAPI/GetUserBans/v1/?steamids={quote(steam_id, safe='')}&api=python"
             response = await client.get(url)
             response.raise_for_status()
             data = response.json()

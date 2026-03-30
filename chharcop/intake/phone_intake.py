@@ -220,7 +220,8 @@ class PhoneIntake:
             )
             self._save_case(case)
             cases.append(case)
-            logger.info("Phone case {} created for {}", case.case_id, phone)
+            # Redact phone number in logs — show only last 4 digits
+            logger.info("Phone case {} created for ***{}", case.case_id, phone[-4:])
 
         return cases
 
@@ -242,11 +243,24 @@ class PhoneIntake:
             logger.warning("Unsupported audio format: {}", audio_path.suffix)
             return None
 
-        # Copy to voicemails dir for archiving
-        dest = self.voicemail_dir / audio_path.name
+        # Copy to voicemails dir for archiving.
+        # Use only the filename (not the full path) to prevent path traversal.
+        safe_name = Path(audio_path.name)
+        if safe_name.name != audio_path.name:
+            # name contains path separators — reject it
+            logger.error("Rejected voicemail path with directory component: {}", audio_path)
+            return None
+        dest = self.voicemail_dir / safe_name
+        # Ensure dest stays inside voicemail_dir (symlink-safe check)
+        try:
+            dest.resolve().relative_to(self.voicemail_dir.resolve())
+        except ValueError:
+            logger.error("Path traversal attempt in voicemail path: {}", audio_path)
+            return None
         if not dest.exists():
             import shutil
             shutil.copy2(audio_path, dest)
+            dest.chmod(0o600)  # owner read/write only
 
         transcription = await self.transcribe_audio(dest)
         if not transcription:
@@ -270,7 +284,8 @@ class PhoneIntake:
             notes=f"Voicemail: {audio_path.name}",
         )
         self._save_case(case)
-        logger.info("Voicemail case {} created for {}", case.case_id, primary_phone)
+        # Redact phone number in logs — show only last 4 digits
+        logger.info("Voicemail case {} created for ***{}", case.case_id, primary_phone[-4:])
         return case
 
     async def transcribe_audio(self, audio_path: Path) -> str:
@@ -354,7 +369,7 @@ class PhoneIntake:
                     lookup_source="abstractapi",
                 )
         except Exception as exc:
-            logger.warning("Phone lookup failed for {}: {}", phone, exc)
+            logger.warning("Phone lookup failed for ***{}: {}", phone[-4:], exc)
             return ReversePhoneLookup(number=digits, lookup_source="failed")
 
     def list_cases(self, status: str | None = None) -> list[PhoneCase]:
