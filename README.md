@@ -282,7 +282,7 @@ Please read the [Contributing Guide](CONTRIBUTING.md) for details on our code of
 
 <p align="center">
   <a href="https://github.com/sponsors/ChharithOeun"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-red?style=for-the-badge&logo=github" alt="Sponsor" /></a>
-  <a href="https://buymeacoffee.com/chharcop"><img src="https://img.shields.io/badge/Buy_Me_A_Coffee-Support-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee" /></a>
+  <a href="https://buymeacoffee.com/chharith"><img src="https://img.shields.io/badge/Buy_Me_A_Coffee-Support-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee" /></a>
 </p>
 
 Chharcop is free and open source. If it's helped you investigate or report a scammer, consider supporting the project to keep it running.
